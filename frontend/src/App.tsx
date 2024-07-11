@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route  } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './store';
 import { getMe } from "./features/User";
@@ -11,7 +11,7 @@ import ProtectedRoute from "./Routes/ProtectedRoute";
 
 function App() {
   const dispatch = useDispatch();
-  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.user);
+  const { error  } = useSelector((state: RootState) => state.user);
 
 
 useEffect(() => {

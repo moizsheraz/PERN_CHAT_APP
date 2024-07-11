@@ -10,7 +10,6 @@ const MessageInput = () => {
     const isLoading = useSelector((state: RootState) => state.SidebarChats.isLoading);
     const sendMessageIsLoading = useSelector((state: RootState) => state.CurrentChatMessages.isLoadingSendMessage);
     const dispatch = useDispatch();
-    const chats = useSelector((state: RootState) => state.SidebarChats.chats);
     const [message, setMessage] = useState('');
     const currentChatItem = localStorage.getItem("currentChat");
     const currentConversationId = currentChatItem ? JSON.parse(currentChatItem) : null;

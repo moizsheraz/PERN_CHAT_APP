@@ -1,6 +1,5 @@
 
 import { useDispatch } from "react-redux";
-import { useEffect } from "react";
 import { getMessages } from "../../features/Messages/fetchMessages";
 import { useSocketContext } from "../../features/Socket/socket";
 const Conversation = ({ conversation }: { conversation: any }) => {

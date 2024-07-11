@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext, ReactNode, useRef } from "react";
 import io, { Socket } from "socket.io-client";
-import { useDispatch, useSelector } from 'react-redux';
+import {  useSelector } from 'react-redux';
 import { RootState } from '../../store';
 
 

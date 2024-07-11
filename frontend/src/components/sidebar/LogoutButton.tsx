@@ -1,4 +1,3 @@
-import React from 'react';
 import { LogOut } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { logoutUser } from '../../features/User';

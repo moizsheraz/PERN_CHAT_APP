@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { signupUser, clearError } from '../features/User/index';
+import { signupUser } from '../features/User/index';
 import GenderCheckbox from "../components/GenderCheckbox";
 import { RootState } from '../store';
 
@@ -14,7 +14,7 @@ const SignUp: React.FC = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.user);
+  const { loading, isAuthenticated } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     if (isAuthenticated) {

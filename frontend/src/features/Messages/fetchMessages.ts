@@ -95,10 +95,10 @@ const currentChatMessagesSlice = createSlice({
         state.isLoadingSendMessage=false; 
 
       })
-      .addCase(sendMessage.pending, (state, action: PayloadAction<Message>) => {
+      .addCase(sendMessage.pending, (state) => {
         state.isLoadingSendMessage=true; 
       })
-      .addCase(sendMessage.rejected, (state, action: PayloadAction<Message>) => {
+      .addCase(sendMessage.rejected, (state) => {
         state.isLoadingSendMessage=false; 
       });
   },

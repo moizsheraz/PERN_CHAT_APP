@@ -1,4 +1,3 @@
-import { DUMMY_CONVERSATIONS } from "../../dummy_data/dummy";
 import { getChats } from "../../features/Chats/fetchchats";
 import Conversation from "./Conversation";
 import { useEffect } from "react";

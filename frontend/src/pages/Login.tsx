@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { loginUser, clearError } from '../features/User';
+import { loginUser } from '../features/User';
 import { RootState } from '../store';
 
 
@@ -18,9 +18,6 @@ const Login = () => {
     dispatch(loginUser({ username, password }));
   };
 
-  const handleClearError = () => {
-    dispatch(clearError());
-  };
 
   React.useEffect(() => {
     if (isAuthenticated) {

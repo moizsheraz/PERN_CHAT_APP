@@ -9,8 +9,6 @@ import { Tooltip as ReactTooltip } from "react-tooltip";
 const MessageContainer = () => {
     const { isSelected } = useSelector((state: RootState) => state.CurrentChatMessages);
     const authUserName = useSelector((state: RootState) => state.user.userInfo?.fullName);
-    const chats = useSelector((state: RootState) => state.SidebarChats.chats);
-
     if (isSelected === false){
         return <NoChatSelected authUserName={authUserName} />;
     }
