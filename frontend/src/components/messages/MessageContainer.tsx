@@ -25,9 +25,9 @@ const MessageContainer = () => {
     }
 
     return (
-        <div className='w-full flex flex-col'>
+        <div className='w-full flex flex-col '>
             {/* Header */}
-            <div className='bg-slate-500 px-4 flex items-center justify-between py-2 mb-2'>
+            <div className='bg-slate-500 px-4 flex items-center  justify-between py-2 mb-2'>
                 <span><span className='text-black'>To:</span> <span className='text-gray-900 font-bold'>{currentConversationId.name}</span></span>
                 <span className="cursor-pointer" data-tooltip-id="current-user"><UserCircle2Icon className="w-8 h-8   "/></span>
             </div>

@@ -58,10 +58,9 @@ export const sendMessage = async (req: Request, res: Response) => {
 		// real time message update
 		const receiversocketId = getReceiverSocketId(receiverId);
 		if(receiverId){
-			io.to(receiverId).emit("newMessage",newMessage);
+			io.to(receiversocketId).emit("newMessage",newMessage);
 		}
-		
-		res.status(201).json({newMessage});
+		res.status(201).json(newMessage);
 
     } catch(error:any){
 		console.error("Error in sendMessage: ", error.message);

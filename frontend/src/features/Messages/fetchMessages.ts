@@ -1,30 +1,34 @@
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { io } from 'socket.io-client';
 
 export interface Message {
-    id: string;
-    body: string;
-    createdAt: string; 
-    shouldShake?: boolean;
+  id: string;
+  body: string;
+  createdAt: string; 
+  shouldShake?: boolean;
 }
 
-export interface currentChatMessages {
+export interface CurrentChatMessages {
   messages: Message[];
   isLoading: boolean;
+  isLoadingSendMessage:boolean;
   error: string | null;
   isSelected: boolean;
 }
+interface SendMessagePayload {
+  id: string;
+  message: string;
+}
 
-const initialState: currentChatMessages = {
+const initialState: CurrentChatMessages = {
   messages: [],
   isLoading: false,
+  isLoadingSendMessage:false,
   error: null,
-  isSelected: false
+  isSelected: false,
 };
 
-export const getMessages:any= createAsyncThunk(
+export const getMessages :any = createAsyncThunk(
   'chats/getMessages',
   async (id: string) => {
     const axiosOptions = {
@@ -42,6 +46,24 @@ export const getMessages:any= createAsyncThunk(
   }
 );
 
+export const sendMessage:any = createAsyncThunk(
+  'chats/sendMessage',
+  async ({ id, message }: SendMessagePayload) => {
+    const axiosOptions = {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    try {
+      const response = await axios.post(`http://localhost:3000/api/messages/send/${id}`, { message }, axiosOptions);
+      return response.data; 
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
 const currentChatMessagesSlice = createSlice({
   name: 'currentChatMessages',
   initialState,
@@ -51,7 +73,7 @@ const currentChatMessagesSlice = createSlice({
     },
     addMessage: (state, action: PayloadAction<Message>) => {
       state.messages.push(action.payload);
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -67,6 +89,17 @@ const currentChatMessagesSlice = createSlice({
       .addCase(getMessages.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Failed to fetch chats';
+      })
+      .addCase(sendMessage.fulfilled, (state, action: PayloadAction<Message>) => {
+        state.messages.push(action.payload); 
+        state.isLoadingSendMessage=false; 
+
+      })
+      .addCase(sendMessage.pending, (state, action: PayloadAction<Message>) => {
+        state.isLoadingSendMessage=true; 
+      })
+      .addCase(sendMessage.rejected, (state, action: PayloadAction<Message>) => {
+        state.isLoadingSendMessage=false; 
       });
   },
 });

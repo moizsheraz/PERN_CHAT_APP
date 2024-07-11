@@ -1,12 +1,16 @@
 
 import { useDispatch } from "react-redux";
+import { useEffect } from "react";
 import { getMessages } from "../../features/Messages/fetchMessages";
 import { useSocketContext } from "../../features/Socket/socket";
 const Conversation = ({ conversation }: { conversation: any }) => {
 	const dispatch = useDispatch();
 	const handleGetMessages=(id:string)=>{
-		dispatch(getMessages(id))
+		dispatch(getMessages(id));
 	}
+
+
+
 	const { onlineUsers } = useSocketContext();
 	const isOnline = onlineUsers.includes(conversation.id);
 	return (
