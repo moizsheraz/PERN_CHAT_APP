@@ -37,6 +37,16 @@ io.on("connection",(socket)=>{
        io.emit("getOnlineUsers",Object.keys(userSocketMap)); 
     })
 
+    socket.on('videocall:req', ({ to, from, message }) => {
+        const receiverSocketId = getReceiverSocketId(to);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('videocall:req', { from, message });
+            console.log("calling");
+        } else {
+            
+        }
+    });
+
 })
 export {io,server,app}
 

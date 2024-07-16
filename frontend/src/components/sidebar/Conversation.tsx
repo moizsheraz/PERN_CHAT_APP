@@ -8,8 +8,6 @@ const Conversation = ({ conversation }: { conversation: any }) => {
 		dispatch(getMessages(id));
 	}
 
-
-
 	const { onlineUsers } = useSocketContext();
 	const isOnline = onlineUsers.includes(conversation.id);
 	return (

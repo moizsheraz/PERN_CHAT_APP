@@ -8,6 +8,7 @@ import Signup from "./pages/SignUp";
 import Home from "./pages/Home";
 import './App.css';
 import ProtectedRoute from "./Routes/ProtectedRoute";
+import VideoCall from "./pages/VideoCall";
 
 function App() {
   const dispatch = useDispatch();
@@ -30,6 +31,7 @@ if(!error){
           </ProtectedRoute>
         } />
         <Route path="/login" element={<Login />} />
+        <Route path="/videocalling" element={<VideoCall />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>
     </div>

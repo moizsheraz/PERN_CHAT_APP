@@ -40,7 +40,7 @@ const isLoading = useSelector((state: RootState) => state.user.loading);
 			socket.on("getOnlineUsers", (users: string[]) => {
 				setOnlineUsers(users);
 			});
-
+				
 			return () => {
 				socket.close();
 				socketRef.current = null;
