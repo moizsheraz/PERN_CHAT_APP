@@ -67,7 +67,6 @@ const MessageContainer = () => {
                     </span>
                 </span>
             </div>
-            <Messages />
             {showIncomingCall && (
                 <div className="bg-gray-600 flex justify-between text-white p-2 m-2 rounded-md">
                    <span className='flex items-center gap-2'>
@@ -79,6 +78,8 @@ const MessageContainer = () => {
                  
                 </div>
             )}
+            <Messages />
+        
             <MessageInput />
        
             <ReactTooltip

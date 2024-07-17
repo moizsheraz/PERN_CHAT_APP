@@ -31,7 +31,7 @@ if(!error){
           </ProtectedRoute>
         } />
         <Route path="/login" element={<Login />} />
-        <Route path="/videocalling" element={<VideoCall />} />
+        <Route path="/VideoCalling/:id" element={<VideoCall />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>
     </div>
