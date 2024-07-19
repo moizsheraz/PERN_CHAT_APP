@@ -53,11 +53,15 @@ io.on("connection",(socket)=>{
         console.log("user joined room", authUserName, roomId);
         usernametoSocketIdMap.set(authUserName, socket.id);
         socketIdToUsernameMap.set(socket.id, authUserName);
-        io.to(roomId).emit("user:joined", { authUserName, id: socket.id });
+        io.to(roomId).emit("user:joined", {
+            authUserName, socketId: socket.id,
+        });
         socket.join(roomId);
         socket.emit("room:join", { authUserName, roomId });
     });
-    
+    socket.on("user:call",({to,offer})=>{
+        io.to(to).emit("incomingCall",{from:socket.id,offer} );
+    })
 
 })
 export {io,server,app}

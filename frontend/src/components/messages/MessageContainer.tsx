@@ -76,7 +76,7 @@ const MessageContainer = () => {
 
     const handleCallPick = () => {
         if (incomingCall) {
-            const roomId = incomingCall.roomId; // Use roomId from the incoming call data
+            const roomId = incomingCall.roomId; 
             socket?.emit("room:join", { authUserName, roomId });
             navigate(`/VideoCalling/${roomId}`);
         }
