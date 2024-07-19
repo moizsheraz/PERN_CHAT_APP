@@ -1,53 +1,95 @@
-import { useState, useEffect } from 'react'; // Import useState and useEffect
+import { useState, useEffect } from 'react';
 import { MessageCircle, Phone, VideoIcon } from "lucide-react";
 import Messages from "./Messages";
 import MessageInput from "./MessageInput";
 import { RootState } from '../../store';
 import { useSelector } from 'react-redux';
 import { UserCircle2Icon } from "lucide-react";
-import { Video } from "lucide-react";
 import { Tooltip as ReactTooltip } from "react-tooltip";
 import { useSocketContext } from "../../features/Socket/socket";
 import videocallsound from '../../assets/sounds/videocall.mp3';
+import { v4 as uuidv4 } from 'uuid';
+import { Video } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+interface IncomingCallData {
+    from: string;
+    message: string;
+    roomId: string; // Added roomId to the interface
+}
+
+interface ConversationId {
+    id?: string;
+    name?: string;
+}
 
 const MessageContainer = () => {
+    const navigate = useNavigate();
     const { socket } = useSocketContext();
-    const [incomingCall, setIncomingCall] = useState<any>(null); 
-    const [showIncomingCall, setShowIncomingCall] = useState(false); 
+    const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
+    const [showIncomingCall, setShowIncomingCall] = useState(false);
+    const { isSelected } = useSelector((state: RootState) => state.CurrentChatMessages);
+    const authUserName = useSelector((state: RootState) => state.user.userInfo?.fullName);
 
     useEffect(() => {
         if (!socket) return;
-        socket?.on("videocall:req", (data) => {
-            setIncomingCall(data); 
+
+        const handleVideoCallReq = (data: IncomingCallData) => {
+            setIncomingCall(data);
             setShowIncomingCall(true);
             const sound = new Audio(videocallsound);
             sound.play();
             setTimeout(() => {
                 setShowIncomingCall(false);
-                setIncomingCall(null); 
-            }, 10000); 
-        });
+                setIncomingCall(null);
+            }, 10000);
+        };
+
+        const handleRoomJoin = (data: { authUserName: string; roomId: string }) => {
+            navigate(`/VideoCalling/${data.roomId}`);
+        };
+
+        socket.on("videocall:req", handleVideoCallReq);
+        socket.on("room:join", handleRoomJoin);
+
+        return () => {
+            socket.off("videocall:req", handleVideoCallReq);
+            socket.off("room:join", handleRoomJoin);
+        };
     }, [socket]);
 
     const handleVideoCallReq = () => {
-        socket?.emit('videocall:req', {
-            to: currentConversationId.id, 
-            from: authUserName,
-            message: 'Video call request'
-        });
+        const currentConversationId: ConversationId = JSON.parse(localStorage.getItem("currentChat") || '{}');
+
+        if (currentConversationId.id) {
+            const roomId = uuidv4();
+            socket?.emit('videocall:req', {
+                to: currentConversationId.id,
+                from: authUserName,
+                message: 'Video call request',
+                roomId: roomId // Include roomId in the event
+            });
+
+            socket?.emit("room:join", { authUserName, roomId });
+        }
     };
 
-    const { isSelected } = useSelector((state: RootState) => state.CurrentChatMessages);
-    const authUserName = useSelector((state: RootState) => state.user.userInfo?.fullName);
-    
+    const handleCallPick = () => {
+        if (incomingCall) {
+            const roomId = incomingCall.roomId; // Use roomId from the incoming call data
+            socket?.emit("room:join", { authUserName, roomId });
+            navigate(`/VideoCalling/${roomId}`);
+        }
+    };
+
     if (!isSelected) {
         return <NoChatSelected authUserName={authUserName} />;
     }
 
-    let currentConversationId = JSON.parse(localStorage.getItem("currentChat") || '{}');
+    const currentConversationId: ConversationId = JSON.parse(localStorage.getItem("currentChat") || '{}');
 
     if (!currentConversationId.id) {
-        currentConversationId = { name: "No Chat Selected" };
+        currentConversationId.name = "No Chat Selected";
     }
 
     return (
@@ -55,7 +97,7 @@ const MessageContainer = () => {
             {/* Header */}
             <div className='bg-slate-500 px-4 flex items-center justify-between py-2 mb-2'>
                 <span>
-                    <span className='text-black'>To:</span> 
+                    <span className='text-black'>To:</span>
                     <span className='text-gray-900 font-bold'>{currentConversationId.name}</span>
                 </span>
                 <span className="flex gap-4">
@@ -67,21 +109,17 @@ const MessageContainer = () => {
                     </span>
                 </span>
             </div>
-            {showIncomingCall && (
+            {showIncomingCall && incomingCall && (
                 <div className="bg-gray-600 flex justify-between text-white p-2 m-2 rounded-md">
-                   <span className='flex items-center gap-2'>
-                   Incoming
-                    <VideoIcon className='w-6 h-6'/>
-                      call from <span className='font-bold'>{incomingCall.from}</span>
-                   </span>
-                  <button className='bg-green-500 p-2 rounded-xl'><Phone/></button>
-                 
+                    <span className='flex items-center gap-2'>
+                        Incoming <VideoIcon className='w-6 h-6' />
+                        call from <span className='font-bold'>{incomingCall.from}</span>
+                    </span>
+                    <button onClick={handleCallPick} className='bg-green-500 p-2 rounded-xl'><Phone /></button>
                 </div>
             )}
             <Messages />
-        
             <MessageInput />
-       
             <ReactTooltip
                 id="current-user"
                 place="bottom"

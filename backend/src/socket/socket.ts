@@ -15,6 +15,9 @@ const io = new Server(server,{
 });
 
 const userSocketMap:{[key:string]:string}={};
+const usernametoSocketIdMap = new Map();
+const socketIdToUsernameMap = new Map();
+
 
 export const getReceiverSocketId=(receiverId:string)=>{
     return userSocketMap[receiverId];
@@ -37,15 +40,24 @@ io.on("connection",(socket)=>{
        io.emit("getOnlineUsers",Object.keys(userSocketMap)); 
     })
 
-    socket.on('videocall:req', ({ to, from, message }) => {
+    socket.on('videocall:req', ({ to, from, message, roomId }) => {
         const receiverSocketId = getReceiverSocketId(to);
         if (receiverSocketId) {
-            io.to(receiverSocketId).emit('videocall:req', { from, message });
+            io.to(receiverSocketId).emit('videocall:req', { from, message, roomId });
             console.log("calling");
-        } else {
-            
-        }
+        } 
     });
+    
+    socket.on("room:join", (data) => {
+        const { authUserName, roomId } = data;
+        console.log("user joined room", authUserName, roomId);
+        usernametoSocketIdMap.set(authUserName, socket.id);
+        socketIdToUsernameMap.set(socket.id, authUserName);
+        io.to(roomId).emit("user:joined", { authUserName, id: socket.id });
+        socket.join(roomId);
+        socket.emit("room:join", { authUserName, roomId });
+    });
+    
 
 })
 export {io,server,app}
