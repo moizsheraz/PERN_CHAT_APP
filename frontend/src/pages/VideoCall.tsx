@@ -29,9 +29,9 @@ const VideoCall = () => {
         setRemoteSocketId(from);
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setMyStream(stream);
+        console.log("Till now wroking fine")
         const answer = await peer.getAnswer(offer);
-        socket?.emit("call:accepted", { to: from, answer });
-        console.log("call received");
+        socket?.emit("call:accepted", { to: from, answer }); 
     };
 
     const handleCallAccepted = async ({ from, answer }: any) => {
@@ -42,12 +42,12 @@ const VideoCall = () => {
     useEffect(() => {
         socket?.on("user:joined", handleUserJoined);
         socket?.on("incomingCall", handleIncomingCall);
-        socket?.on("call:accepted", handleCallAccepted);
+        socket?.on("call:accecpted", handleCallAccepted);
         
         return () => {
             socket?.off("user:joined", handleUserJoined);
             socket?.off("incomingCall", handleIncomingCall);
-            socket?.off("call:accepted", handleCallAccepted);
+            socket?.off("call:accecpted", handleCallAccepted);
         };
     }, [socket]);
 
