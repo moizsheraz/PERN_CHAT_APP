@@ -64,7 +64,7 @@ io.on("connection",(socket)=>{
     })
 
     socket.on("call:accepted",({to,answer})=>{
-        io.to(to).emit("call:accecpted",{from:socket.id})
+        io.to(to).emit("call:accecpted",{from:socket.id,answer})
     })
 
 })

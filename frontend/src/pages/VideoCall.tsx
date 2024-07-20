@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState , useCallback } from 'react';
 import { useSocketContext } from '../features/Socket/socket';
 import peer from '../services/peer';
 
@@ -10,8 +10,10 @@ const VideoCall = () => {
 
     const { socket } = useSocketContext();
     const [remoteSocketId, setRemoteSocketId] = useState<string | null>(null);
+    const [remotestream, setRemoteStream] = useState<MediaStream | null>(null);
     const [myStream, setMyStream] = useState<MediaStream | null>(null);
-    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const myVideoRef = useRef<HTMLVideoElement | null>(null);
+    const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
 
     const handleUserJoined = (data: UserJoinedData) => {
         localStorage.setItem("remoteSocketId", data.socketId);
@@ -29,31 +31,43 @@ const VideoCall = () => {
         setRemoteSocketId(from);
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setMyStream(stream);
-        console.log("Till now wroking fine")
+        console.log("Till now working fine");
         const answer = await peer.getAnswer(offer);
         socket?.emit("call:accepted", { to: from, answer }); 
     };
 
+    const sendStreams = useCallback(() => {
+        if (myStream) {
+          for (const track of myStream.getTracks()) {
+            peer.peer.addTrack(track, myStream);
+          }
+        }
+      }, [myStream]);
+      
+
     const handleCallAccepted = async ({ from, answer }: any) => {
         await peer.setRemoteDescription(new RTCSessionDescription(answer));
-        console.log("call accepted");
+        console.log("Call accepted");
+       
     };
+
+    
 
     useEffect(() => {
         socket?.on("user:joined", handleUserJoined);
         socket?.on("incomingCall", handleIncomingCall);
-        socket?.on("call:accecpted", handleCallAccepted);
+        socket?.on("call:accepted", handleCallAccepted);
         
         return () => {
             socket?.off("user:joined", handleUserJoined);
             socket?.off("incomingCall", handleIncomingCall);
-            socket?.off("call:accecpted", handleCallAccepted);
+            socket?.off("call:accepted", handleCallAccepted);
         };
     }, [socket]);
 
     useEffect(() => {
-        if (videoRef.current && myStream) {
-            videoRef.current.srcObject = myStream;
+        if (myVideoRef.current && myStream) {
+            myVideoRef.current.srcObject = myStream;
         }
     }, [myStream]);
 
@@ -61,16 +75,17 @@ const VideoCall = () => {
         <div className="container mx-auto p-4">
             <div className="bg-primary shadow-md rounded-lg overflow-hidden">
                 <div className="flex flex-col md:flex-row">
-                    <div className="w-full md:w-1/2 p-2">
-                        <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
+                    <div className="w-full md:w-1/3 p-2">
+                        <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden relative">
                             <video
-                                id="user1Video"
+                                id="myVideo"
                                 style={{ transform: 'scaleX(-1)' }}
-                                ref={videoRef}
+                                ref={myVideoRef}
                                 autoPlay
                                 playsInline
                                 className="w-full h-full object-cover"
                             ></video>
+                            <span className="absolute bottom-2 left-2 text-white bg-black bg-opacity-50 px-2 py-1 rounded">You</span>
                         </div>
                         <div className="mt-2 text-center">
                             <button
@@ -84,19 +99,20 @@ const VideoCall = () => {
                             </button>
                         </div>
                     </div>
-                    <div className="w-full md:w-1/2 p-2">
-                        <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
+                    <div className="w-full md:w-2/3 p-2">
+                        <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden relative">
                             <video
-                                id="user2Video"
+                                id="remoteVideo"
+                                ref={remoteVideoRef}
+                                autoPlay
+                                playsInline
                                 className="w-full h-full object-cover"
                             ></video>
+                            <span className="absolute bottom-2 left-2 text-white bg-black bg-opacity-50 px-2 py-1 rounded">Other User</span>
                         </div>
                         <div className="mt-2 text-center flex flex-col gap-2">
-                            <span className="font-bold text-white"> Connected to : {remoteSocketId}</span>
-                            <div>
-                                <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Call</button>
-                                <button className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">End Call</button>
-                            </div>
+                            <span className="font-bold text-white">Connected to: {remoteSocketId}</span>
+                          
                         </div>
                     </div>
                 </div>
