@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState , useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSocketContext } from '../features/Socket/socket';
 import peer from '../services/peer';
 
@@ -33,31 +33,29 @@ const VideoCall = () => {
         setMyStream(stream);
         console.log("Till now working fine");
         const answer = await peer.getAnswer(offer);
-        socket?.emit("call:accepted", { to: from, answer }); 
+        socket?.emit("call:accepted", { to: from, answer });
     };
 
     const sendStreams = useCallback(() => {
         if (myStream) {
-          for (const track of myStream.getTracks()) {
-            peer.peer.addTrack(track, myStream);
-          }
+            for (const track of myStream.getTracks()) {
+                peer.peer.addTrack(track, myStream);
+            }
         }
-      }, [myStream]);
-      
+    }, [myStream]);
 
     const handleCallAccepted = async ({ from, answer }: any) => {
-        await peer.setRemoteDescription(new RTCSessionDescription(answer));
-        console.log("Call accepted");
-       
+        console.log("Call Accepted from: ", from, answer);
+        // await peer.setLocalDescription(answer);
+        console.log("Call Accepted!");
+        // sendStreams();
     };
-
-    
 
     useEffect(() => {
         socket?.on("user:joined", handleUserJoined);
         socket?.on("incomingCall", handleIncomingCall);
         socket?.on("call:accepted", handleCallAccepted);
-        
+
         return () => {
             socket?.off("user:joined", handleUserJoined);
             socket?.off("incomingCall", handleIncomingCall);
@@ -70,6 +68,20 @@ const VideoCall = () => {
             myVideoRef.current.srcObject = myStream;
         }
     }, [myStream]);
+
+    useEffect(() => {
+        if (remoteVideoRef.current && remotestream) {
+            remoteVideoRef.current.srcObject = remotestream;
+        }
+    }, [remotestream]);
+
+    useEffect(() => {
+        peer.peer.addEventListener("track", async (ev) => {
+            const remoteStream = ev.streams;
+            console.log("GOT TRACKS!!");
+            setRemoteStream(remoteStream[0]);
+        });
+    }, []);
 
     return (
         <div className="container mx-auto p-4">
@@ -112,7 +124,6 @@ const VideoCall = () => {
                         </div>
                         <div className="mt-2 text-center flex flex-col gap-2">
                             <span className="font-bold text-white">Connected to: {remoteSocketId}</span>
-                          
                         </div>
                     </div>
                 </div>
