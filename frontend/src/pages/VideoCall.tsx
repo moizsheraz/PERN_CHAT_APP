@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSocketContext } from '../features/Socket/socket';
 import peer from '../services/peer';
+import ReactPlayer from "react-player";
 
 const VideoCall = () => {
     interface UserJoinedData {
@@ -12,8 +13,6 @@ const VideoCall = () => {
     const [remoteSocketId, setRemoteSocketId] = useState<string | null>(null);
     const [remotestream, setRemoteStream] = useState<MediaStream | null>(null);
     const [myStream, setMyStream] = useState<MediaStream | null>(null);
-    const myVideoRef = useRef<HTMLVideoElement | null>(null);
-    const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
 
     const handleUserJoined = (data: UserJoinedData) => {
         localStorage.setItem("remoteSocketId", data.socketId);
@@ -31,104 +30,131 @@ const VideoCall = () => {
         setRemoteSocketId(from);
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setMyStream(stream);
-        console.log("Till now working fine");
         const answer = await peer.getAnswer(offer);
         socket?.emit("call:accepted", { to: from, answer });
     };
 
     const sendStreams = useCallback(() => {
         if (myStream) {
+            const senders = peer.peer.getSenders();
+            const trackIds = senders.map(sender => sender.track?.id);
+
             for (const track of myStream.getTracks()) {
-                peer.peer.addTrack(track, myStream);
+                if (!trackIds.includes(track.id)) {
+                    peer.peer.addTrack(track, myStream);
+                }
             }
         }
     }, [myStream]);
 
     const handleCallAccepted = async ({ from, answer }: any) => {
-        console.log("Call Accepted from: ", from, answer);
-        // await peer.setLocalDescription(answer);
-        console.log("Call Accepted!");
-        // sendStreams();
+        await peer.setLocalDescription(answer);
+        sendStreams();
     };
+
+    const handleNegoNeeded = useCallback(async () => {
+        const offer = await peer.getOffer();
+        socket?.emit("peer:nego:needed", { offer, to: remoteSocketId });
+    }, [remoteSocketId, socket]);
+
+    useEffect(() => {
+        peer.peer.addEventListener("negotiationneeded", handleNegoNeeded);
+        return () => {
+            peer.peer.removeEventListener("negotiationneeded", handleNegoNeeded);
+        };
+    }, [handleNegoNeeded]);
 
     useEffect(() => {
         socket?.on("user:joined", handleUserJoined);
         socket?.on("incomingCall", handleIncomingCall);
         socket?.on("call:accepted", handleCallAccepted);
+        socket?.on("peer:nego:needed", handleNegoNeedIncomming);
+        socket?.on("peer:nego:final", handleNegoNeedFinal);
 
         return () => {
             socket?.off("user:joined", handleUserJoined);
             socket?.off("incomingCall", handleIncomingCall);
             socket?.off("call:accepted", handleCallAccepted);
+            socket?.off("peer:nego:needed", handleNegoNeedIncomming);
+            socket?.off("peer:nego:final", handleNegoNeedFinal);
         };
     }, [socket]);
 
-    useEffect(() => {
-        if (myVideoRef.current && myStream) {
-            myVideoRef.current.srcObject = myStream;
-        }
-    }, [myStream]);
+    const handleNegoNeedIncomming = useCallback(
+        async ({ from, offer }: any) => {
+            const ans = await peer.getAnswer(offer);
+            socket?.emit("peer:nego:done", { to: from, ans });
+        },
+        [socket]
+    );
 
-    useEffect(() => {
-        if (remoteVideoRef.current && remotestream) {
-            remoteVideoRef.current.srcObject = remotestream;
-        }
-    }, [remotestream]);
+    const handleNegoNeedFinal = useCallback(async ({ ans }: any) => {
+        await peer.setLocalDescription(ans);
+    }, []);
 
     useEffect(() => {
         peer.peer.addEventListener("track", async (ev) => {
             const remoteStream = ev.streams;
-            console.log("GOT TRACKS!!");
             setRemoteStream(remoteStream[0]);
         });
     }, []);
 
     return (
-        <div className="container mx-auto p-4">
-            <div className="bg-primary shadow-md rounded-lg overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                    <div className="w-full md:w-1/3 p-2">
-                        <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden relative">
-                            <video
-                                id="myVideo"
-                                style={{ transform: 'scaleX(-1)' }}
-                                ref={myVideoRef}
-                                autoPlay
-                                playsInline
-                                className="w-full h-full object-cover"
-                            ></video>
-                            <span className="absolute bottom-2 left-2 text-white bg-black bg-opacity-50 px-2 py-1 rounded">You</span>
-                        </div>
-                        <div className="mt-2 text-center">
-                            <button
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
-                                onClick={handleCallUser}
-                            >
-                                Call
-                            </button>
-                            <button className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
-                                End Call
-                            </button>
-                        </div>
-                    </div>
-                    <div className="w-full md:w-2/3 p-2">
-                        <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden relative">
-                            <video
-                                id="remoteVideo"
-                                ref={remoteVideoRef}
-                                autoPlay
-                                playsInline
-                                className="w-full h-full object-cover"
-                            ></video>
-                            <span className="absolute bottom-2 left-2 text-white bg-black bg-opacity-50 px-2 py-1 rounded">Other User</span>
-                        </div>
-                        <div className="mt-2 text-center flex flex-col gap-2">
-                            <span className="font-bold text-white">Connected to: {remoteSocketId}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div className="flex flex-col items-center w-[90vw] max-w-screen-lg p-4 bg-primary min-h-screen mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-4">Video Chat</h1>
+        <h4 className="text-xl text-white mb-4">
+            {remoteSocketId ? "Connected" : "No one in Call"}
+        </h4>
+        <div className="flex gap-4 mb-4">
+            {myStream && (
+                <button
+                    onClick={sendStreams}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                    Send Stream
+                </button>
+            )}
+            {remoteSocketId && (
+                <button
+                    onClick={handleCallUser}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                    Call
+                </button>
+            )}
         </div>
+        <div className="flex flex-col md:flex-row gap-4 w-full">
+            {myStream && (
+                <div className="flex flex-col items-center w-full md:w-1/2">
+                    <h1 className="text-xl font-semibold text-white mb-2">You</h1>
+                    <ReactPlayer
+                        style={{ transform: 'scaleX(-1)' }}
+                        playing
+                        muted
+                        height="320px"
+                        width="100%"
+                        url={myStream}
+                        className="border-8 border-blue-500 rounded"
+                    />
+                </div>
+            )}
+            {remotestream && (
+                <div className="flex flex-col items-center w-full md:w-1/2">
+                    <h1 className="text-xl font-semibold text-white mb-2">Remote Stream</h1>
+                    <ReactPlayer
+                        style={{ transform: 'scaleX(-1)' }}
+                        playing
+                        muted
+                        height="320px"
+                        width="100%"
+                        url={remotestream}
+                        className="border-8 border-red-500 rounded"
+                    />
+                </div>
+            )}
+        </div>
+    </div>
+    
     );
 };
 

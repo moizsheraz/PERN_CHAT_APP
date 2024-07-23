@@ -46,6 +46,7 @@ const MessageContainer = () => {
         };
 
         const handleRoomJoin = (data: { authUserName: string; roomId: string }) => {
+            console.log("Room joined: ");
             navigate(`/VideoCalling/${data.roomId}`);
         };
 
@@ -112,8 +113,7 @@ const MessageContainer = () => {
             {showIncomingCall && incomingCall && (
                 <div className="bg-gray-600 flex justify-between text-white p-2 m-2 rounded-md">
                     <span className='flex items-center gap-2'>
-                        Incoming <VideoIcon className='w-6 h-6' />
-                        call from <span className='font-bold'>{incomingCall.from}</span>
+            {incomingCall.from} has sent a video call request.                        
                     </span>
                     <button onClick={handleCallPick} className='bg-green-500 p-2 rounded-xl'><Phone /></button>
                 </div>
